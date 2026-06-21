@@ -4,6 +4,7 @@ import shutil
 import time
 import threading
 import uuid
+import webbrowser
 
 import openpyxl
 from openpyxl.styles import PatternFill
@@ -355,6 +356,8 @@ def api_download(job_id):
 
 
 if __name__ == "__main__":
+    url = "http://127.0.0.1:5000"
     print("\nPIA AWB Tracker Web Server")
-    print("Open your browser at:  http://127.0.0.1:5000\n")
+    print(f"Opening browser at: {url}\n")
+    webbrowser.open(url)
     app.run(host="127.0.0.1", port=5000, threaded=True, debug=False)
