@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PIA AWB Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 60px;
+    }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 36px; }
+    .header h1 { font-size: 26px; font-weight: 700; color: #f0f6fc; letter-spacing: -0.5px; }
+    .header p  { margin-top: 6px; font-size: 14px; color: #8b949e; }
+
+    /* ── Card ── */
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 14px;
+      padding: 32px;
+      width: 100%;
+      max-width: 620px;
+    }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8b949e;
+      margin-bottom: 10px;
+    }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      position: relative;
+      border: 2px dashed #30363d;
+      border-radius: 10px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.18s, background 0.18s;
+    }
+    .drop-zone:hover  { border-color: #58a6ff; background: rgba(88,166,255,0.04); }
+    .drop-zone.active { border-color: #58a6ff; background: rgba(88,166,255,0.08); }
+    .drop-zone.has-file { border-style: solid; border-color: #3fb950; }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .dz-icon { font-size: 36px; line-height: 1; margin-bottom: 12px; color: #484f58; }
+    .has-file .dz-icon { color: #3fb950; }
+    .dz-label { font-size: 14px; color: #8b949e; }
+    .dz-label strong { color: #58a6ff; }
+    .dz-filename {
+      display: none;
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #3fb950;
+    }
+    .has-file .dz-filename { display: block; }
+    .has-file .dz-hint     { display: none; }
+
+    /* ── Row range ── */
+    .row-range {
+      display: flex;
+      gap: 14px;
+      margin-top: 24px;
+    }
+    .field { flex: 1; }
+    .field label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 8px; }
+    .field input[type="number"] {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      padding: 10px 14px;
+      font-size: 15px;
+      transition: border-color 0.15s;
+      -moz-appearance: textfield;
+    }
+    .field input[type="number"]:focus { outline: none; border-color: #58a6ff; }
+    .field input[type="number"]::-webkit-inner-spin-button,
+    .field input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    /* ── Start button ── */
+    .btn-start {
+      display: block;
+      width: 100%;
+      margin-top: 24px;
+      padding: 13px;
+      background: linear-gradient(180deg, #2ea043, #238636);
+      border: 1px solid rgba(240,246,252,0.1);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-start:hover:not(:disabled) { opacity: 0.88; }
+    .btn-start:disabled {
+      background: #21262d;
+      color: #484f58;
+      cursor: not-allowed;
+      border-color: #30363d;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid #21262d;
+      margin: 28px 0;
+      display: none;
+    }
+    .divider.visible { display: block; }
+
+    /* ── Console ── */
+    .console-wrap { display: none; }
+    .console-wrap.visible { display: block; }
+
+    .console-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .status-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: #f0e040;
+      flex-shrink: 0;
+      animation: blink 1s ease-in-out infinite;
+    }
+    .status-dot.done  { background: #3fb950; animation: none; }
+    .status-dot.error { background: #f85149; animation: none; }
+    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.25; } }
+
+    .status-text { font-size: 13px; color: #8b949e; }
+
+    .console {
+      background: #010409;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      padding: 14px 16px;
+      height: 300px;
+      overflow-y: auto;
+      font-family: "Cascadia Code", "Fira Code", "Courier New", monospace;
+      font-size: 12.5px;
+      line-height: 1.65;
+      scroll-behavior: smooth;
+    }
+    .console::-webkit-scrollbar { width: 6px; }
+    .console::-webkit-scrollbar-track { background: transparent; }
+    .console::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+    .log-line         { color: #8b949e; }
+    .log-line.ok      { color: #3fb950; }
+    .log-line.fail    { color: #f85149; }
+    .log-line.info    { color: #58a6ff; }
+    .log-line.heading { color: #e6edf3; font-weight: 600; }
+
+    /* ── Download button ── */
+    .btn-download {
+      display: none;
+      width: 100%;
+      margin-top: 18px;
+      padding: 13px;
+      background: linear-gradient(180deg, #388bfd, #1f6feb);
+      border: 1px solid rgba(240,246,252,0.1);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      text-align: center;
+      transition: opacity 0.15s;
+    }
+    .btn-download:hover { opacity: 0.88; }
+    .btn-download.visible { display: block; }
+
+    /* ── Stats bar ── */
+    .stats {
+      display: none;
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #8b949e;
+      gap: 24px;
+    }
+    .stats.visible { display: flex; }
+    .stat-item strong { color: #e6edf3; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>PIA AWB Tracker</h1>
+    <p>Drop your Excel file, set the row range, and let the tracker do the rest.</p>
+  </div>
+
+  <div class="card">
+
+    <!-- Step 1: File upload -->
+    <div class="section-label">Step 1 — Excel File</div>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".xlsx" />
+      <div class="dz-icon" id="dzIcon">&#128193;</div>
+      <div class="dz-label dz-hint">
+        Drag &amp; drop your <strong>.xlsx</strong> file here, or <strong>click to browse</strong>
+      </div>
+      <div class="dz-filename" id="dzFilename"></div>
+    </div>
+
+    <!-- Step 2: Row range -->
+    <div class="row-range" style="margin-top:24px;">
+      <div class="field">
+        <label for="startRow">Start Row</label>
+        <input type="number" id="startRow" value="2" min="2" placeholder="e.g. 700" />
+      </div>
+      <div class="field">
+        <label for="endRow">End Row</label>
+        <input type="number" id="endRow" value="747" min="2" placeholder="e.g. 740" />
+      </div>
+    </div>
+
+    <!-- Step 3: Submit -->
+    <button class="btn-start" id="startBtn" onclick="startTracking()">
+      Start Tracking
+    </button>
+
+    <!-- Divider -->
+    <hr class="divider" id="divider" />
+
+    <!-- Progress console -->
+    <div class="console-wrap" id="consoleWrap">
+      <div class="console-header">
+        <div class="status-dot" id="statusDot"></div>
+        <span class="status-text" id="statusText">Running...</span>
+      </div>
+      <div class="console" id="console"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats" id="stats">
+      <div class="stat-item">Tracked: <strong id="statTotal">0</strong></div>
+      <div class="stat-item">Success: <strong id="statOk" style="color:#3fb950">0</strong></div>
+      <div class="stat-item">Failed:  <strong id="statFail" style="color:#f85149">0</strong></div>
+    </div>
+
+    <!-- Download -->
+    <a class="btn-download" id="downloadBtn" href="#">
+      Download Updated Excel
+    </a>
+
+  </div>
+
+  <script>
+    // ── File drag & drop ────────────────────────────────────────────────────
+    let selectedFile = null;
+    const dropZone   = document.getElementById("dropZone");
+    const fileInput  = document.getElementById("fileInput");
+    const dzFilename = document.getElementById("dzFilename");
+    const dzIcon     = document.getElementById("dzIcon");
+
+    dropZone.addEventListener("dragover",  e => { e.preventDefault(); dropZone.classList.add("active"); });
+    dropZone.addEventListener("dragleave", ()  => dropZone.classList.remove("active"));
+    dropZone.addEventListener("drop", e => {
+      e.preventDefault();
+      dropZone.classList.remove("active");
+      const f = e.dataTransfer.files[0];
+      if (f) applyFile(f);
+    });
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files[0]) applyFile(fileInput.files[0]);
+    });
+
+    function applyFile(f) {
+      if (!f.name.toLowerCase().endsWith(".xlsx")) {
+        alert("Please select an .xlsx file.");
+        return;
+      }
+      selectedFile = f;
+      dzFilename.textContent = f.name;
+      dzIcon.textContent     = "✓";   // checkmark
+      dropZone.classList.add("has-file");
+    }
+
+    // ── Console helpers ─────────────────────────────────────────────────────
+    const consoleEl = document.getElementById("console");
+
+    function logLine(msg, cls) {
+      const div = document.createElement("div");
+      div.className = "log-line" + (cls ? " " + cls : "");
+      div.textContent = msg;
+      consoleEl.appendChild(div);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function classForMsg(msg) {
+      if (msg.includes("[OK]"))   return "ok";
+      if (msg.includes("[FAIL]")) return "fail";
+      if (/^Row \d+:/.test(msg)) return "info";
+      if (/^\[/.test(msg))       return "heading";
+      return "";
+    }
+
+    // ── Main tracking flow ──────────────────────────────────────────────────
+    let okCount = 0, failCount = 0, totalCount = 0;
+
+    async function startTracking() {
+      if (!selectedFile) { alert("Please select an Excel file first."); return; }
+
+      const startRow = parseInt(document.getElementById("startRow").value, 10);
+      const endRow   = parseInt(document.getElementById("endRow").value,   10);
+      if (isNaN(startRow) || isNaN(endRow) || endRow < startRow || startRow < 2) {
+        alert("Please enter valid row numbers (start >= 2, end >= start).");
+        return;
+      }
+
+      // Reset UI
+      document.getElementById("startBtn").disabled = true;
+      consoleEl.innerHTML = "";
+      okCount = failCount = totalCount = 0;
+      updateStats();
+      document.getElementById("divider").classList.add("visible");
+      document.getElementById("consoleWrap").classList.add("visible");
+      document.getElementById("downloadBtn").classList.remove("visible");
+      document.getElementById("stats").classList.remove("visible");
+      document.getElementById("statusDot").className = "status-dot";
+      document.getElementById("statusText").textContent = "Running...";
+
+      // Upload + start job
+      const fd = new FormData();
+      fd.append("excel",     selectedFile);
+      fd.append("start_row", startRow);
+      fd.append("end_row",   endRow);
+
+      logLine("Uploading file to server...", "info");
+
+      let jobId;
+      try {
+        const res = await fetch("/api/start", { method: "POST", body: fd });
+        const raw = await res.text();
+        let data;
+        try { data = JSON.parse(raw); }
+        catch { throw new Error(`Server error (HTTP ${res.status}): ${raw.slice(0, 400)}`); }
+        if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+        jobId = data.job_id;
+      } catch (err) {
+        logLine("Error: " + err.message, "fail");
+        document.getElementById("startBtn").disabled = false;
+        return;
+      }
+
+      logLine("Job started — Firefox running in headless mode.", "info");
+
+      // Stream progress via SSE
+      const es = new EventSource("/api/progress/" + jobId);
+
+      es.onmessage = e => {
+        const msg = JSON.parse(e.data);
+
+        if (msg.type === "log") {
+          const cls = classForMsg(msg.msg);
+          logLine(msg.msg, cls);
+          if (msg.msg.includes("[OK]"))   { okCount++;   totalCount++; updateStats(); }
+          if (msg.msg.includes("[FAIL]")) { failCount++; totalCount++; updateStats(); }
+
+        } else if (msg.type === "status") {
+          es.close();
+          document.getElementById("startBtn").disabled = false;
+
+          if (msg.value === "done") {
+            document.getElementById("statusDot").className    = "status-dot done";
+            document.getElementById("statusText").textContent = "Completed successfully";
+            document.getElementById("stats").classList.add("visible");
+            const dlBtn = document.getElementById("downloadBtn");
+            dlBtn.href = "/api/download/" + jobId;
+            dlBtn.classList.add("visible");
+          } else {
+            document.getElementById("statusDot").className    = "status-dot error";
+            document.getElementById("statusText").textContent = "Failed: " + (msg.error || "unknown error");
+            logLine("Job failed: " + (msg.error || ""), "fail");
+          }
+
+        } else if (msg.type === "error") {
+          es.close();
+          logLine(msg.msg, "fail");
+          document.getElementById("startBtn").disabled = false;
+        }
+      };
+
+      es.onerror = () => {
+        es.close();
+        logLine("Connection to server lost.", "fail");
+        document.getElementById("startBtn").disabled = false;
+      };
+    }
+
+    function updateStats() {
+      document.getElementById("statTotal").textContent = totalCount;
+      document.getElementById("statOk").textContent    = okCount;
+      document.getElementById("statFail").textContent  = failCount;
+    }
+  </script>
+</body>
+</html>

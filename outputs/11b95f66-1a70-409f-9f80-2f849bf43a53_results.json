@@ -1,0 +1,86 @@
+[
+  {
+    "status": "success",
+    "excel_row": 729,
+    "data": {
+      "awb": "214-82203671",
+      "origin": "Peshawar (PEW)",
+      "destination": "Doha (DOH)",
+      "pieces": "433",
+      "weight": "2055.0 KG",
+      "status": "Arrival documentation delivered",
+      "flight_no": "",
+      "date": "21-Jun-26"
+    }
+  },
+  {
+    "status": "success",
+    "excel_row": 730,
+    "data": {
+      "awb": "214-82199946",
+      "origin": "Peshawar (PEW)",
+      "destination": "Doha (DOH)",
+      "pieces": "270",
+      "weight": "1380.0 KG",
+      "status": "Consignee/agent notified of arrival",
+      "flight_no": "",
+      "date": "21-Jun-26"
+    }
+  },
+  {
+    "status": "success",
+    "excel_row": 731,
+    "data": {
+      "awb": "214-82203704",
+      "origin": "Peshawar (PEW)",
+      "destination": "Dubai (DXB)",
+      "pieces": "110",
+      "weight": "690.0 KG",
+      "status": "Consignee/agent notified of arrival",
+      "flight_no": "",
+      "date": "21-Jun-26"
+    }
+  },
+  {
+    "status": "success",
+    "excel_row": 732,
+    "data": {
+      "awb": "214-82202223",
+      "origin": "Peshawar (PEW)",
+      "destination": "Dubai (DXB)",
+      "pieces": "580",
+      "weight": "2025.0 KG",
+      "status": "Delivered",
+      "flight_no": "",
+      "date": "21-Jun-26"
+    }
+  },
+  {
+    "status": "success",
+    "excel_row": 736,
+    "data": {
+      "awb": "214-82202912",
+      "origin": "Peshawar (PEW)",
+      "destination": "Dubai (DXB)",
+      "pieces": "200",
+      "weight": "1000.0 KG",
+      "status": "Booked",
+      "flight_no": "PK283",
+      "date": "22-Jun-26"
+    }
+  },
+  {
+    "status": "success",
+    "excel_row": 747,
+    "data": {
+      "awb": "214-82202680",
+      "origin": "Islamabad (ISB)",
+      "destination": "Doha (DOH)",
+      "pieces": "250",
+      "weight": "1500.0 KG",
+      "status": "Booked",
+      "flight_no": "PK287",
+      "date": "22-Jun-26"
+    }
+  }
+]
